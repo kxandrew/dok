@@ -1,0 +1,33 @@
+config.vm.define "lab-dc1" do |subconfig|
+    #Определяем готовый образ ОС для виртуальной машины. Vagrant скачает указанный образ из публичного репозитория (https://app.vagrantup.com/boxes/search)
+    subconfig.vm.box = "gusztavvargadr/windows-server"
+    #Определяем название хоста виртуальной машины
+    subconfig.vm.hostname = "lab-dc1"
+    #Определяем настройки провайдера виртуализации (необязательно)
+    subconfig.vm.provider :virtualbox do |vb|
+        #Запускам виртуальную машину в фоне
+        vb.gui = false
+    end
+    #Определяем конфигурацию сети: тип адаптера, ip.
+    subconfig.vm.network "private_network", ip: "192.168.11.2", 
+        virtualbox__intnet: true
+    #Определяем логин и пароль для подключения и дальнейшей конфигурации ВМ
+    subconfig.winrm.username = "vagrant"
+    subconfig.winrm.password = "vagrant"
+    #Определяем параметры подключения.
+    subconfig.winrm.transport = :plaintext
+    subconfig.winrm.basic_auth_only = true 
+    #Выполняем Powershell сценарий, который установит необходимые DSC модули
+    subconfig.vm.provision "shell",
+        path: "provision\\PreDSCInstall.ps1"
+    #Выполняем Powershell DSC сценарий, который развернет службы AD
+    #https://github.com/dsccommunity/ActiveDirectoryDsc
+    subconfig.vm.provision "shell",
+        path: "provision\\DSCInstallDomain.ps1"
+    #Выполняем перезагрузку ВМ после инсталляции служб AD
+    subconfig.vm.provision :reload
+    #Выполняем Powershell DSC сценарий, который развернет и настроит службу DHCP
+    #https://github.com/dsccommunity/xDhcpServer
+    subconfig.vm.provision "shell",
+        path: "provision\\DSCInstallDHCP.ps1"
+end
