@@ -1,0 +1,57 @@
+#Декларируем название конфигурации
+Configuration xDhcpsServerScope_NewScope
+{
+    #Импортируем необходимые ресурсы
+    Import-DscResource -ModuleName xDHCpServer
+    #Декларируем хосты на которых будет применяться конфигурация
+    Node 'localhost'
+    {
+        #Декларируем установку компонента RSAT-DHCP при помощи ресурса WindowsFeature (пример стандартного ресурса)
+        WindowsFeature 'RSAT-DHCP'
+        {
+            #Декларируем необходимые имя и статус инсталляции компонента.
+            Name   = 'RSAT-DHCP'
+            Ensure = 'Present'
+        }
+        #Декларируем установку компонента DHCP при помощи ресурса WindowsFeature (пример стандартного ресурса)
+        WindowsFeature 'DHCP'
+        {
+            #Декларируем необходимые имя и статус инсталляции компонента.
+            Name   = 'DHCP'
+            Ensure = 'Present'
+        }
+        #Декларируем необходимость авторизации сервера при помощи ресурса xDhcpServerAuthorization (пример пользовательского ресурса)    
+        xDhcpServerAuthorization LocalServerActivation
+        {
+            Ensure = 'Present'
+        }     
+        #Декларируем необходимость создания области DHCP при помощи ресурса xDhcpServerScope (пример пользовательского ресурса)
+        xDhcpServerScope Scope
+        {
+            #Декларируем настройки области
+            ScopeId = '192.168.11.0'
+            Ensure = 'Present'
+            IPEndRange = '192.168.11.254'
+            IPStartRange = '192.168.11.10'
+            Name = '11.0/24'
+            SubnetMask = '255.255.255.0'
+            LeaseDuration = ((New-TimeSpan -Hours 8 ).ToString())
+            State = 'Active'
+            AddressFamily = 'IPv4'
+        }     
+        #Декларируем необходимость создания параметров области DHCP при помощи ресурса xDhcpServerOption (пример пользовательского ресурса)
+        xDhcpServerOption Option
+        {
+            Ensure = 'Present'
+            ScopeID = '192.168.11.0'
+            DnsDomain = 'party.hard'
+            DnsServerIPAddress = '192.168.11.2'
+            AddressFamily = 'IPv4'
+            Router = '192.168.11.1'
+        }
+    }
+}
+#Формируем MOF файл для применения конфигурации
+xDhcpsServerScope_NewScope
+#Применяем конфигурацию на хосте
+Start-DscConfiguration -Path .\xDhcpsServerScope_NewScope -Force -Wait -Verbose
