@@ -1,0 +1,9 @@
+LAB
+│   Vagrantfile
+│
+└───provision
+        ConfigureRebootOnNode.ps1
+        DSCInstallDHCP.ps1
+        DSCInstallDomain.ps1
+        DSCJoinDomain.ps1
+        PreDSCInstall.ps1
